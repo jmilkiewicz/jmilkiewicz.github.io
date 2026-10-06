@@ -1,0 +1,9 @@
+{%- comment -%}
+  Renders include.html with every absolute link opening in a new tab.
+  Links to this site (site.url) are left untouched.
+  Usage: {% include external-links.html html=content %}
+{%- endcomment -%}
+{%- assign new_tab = '<a target="_blank" rel="noopener" href="http' -%}
+{%- assign own_new_tab = '<a target="_blank" rel="noopener" href="' | append: site.url -%}
+{%- assign own_plain = '<a href="' | append: site.url -%}
+{{ include.html | replace: '<a href="http', new_tab | replace: own_new_tab, own_plain }}

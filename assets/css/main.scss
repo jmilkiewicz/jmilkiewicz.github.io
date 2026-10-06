@@ -198,3 +198,11 @@ th { background: var(--code-bg); font-weight: 600; }
   .gd { background: var(--hl-deleted-bg); }
   .err { color: inherit; }
 }
+
+// External links open in a new tab (see _includes/external-links.html); mark them.
+main a[target="_blank"]::after {
+  content: "\2009↗";
+  content: "\2009↗" / " (opens in a new tab)";
+  font-size: 0.8em;
+  text-decoration: none;
+}
