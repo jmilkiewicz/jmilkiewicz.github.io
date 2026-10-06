@@ -1,0 +1,41 @@
+title: "jmilkiewicz"
+description: "Technical articles on Temporal, TypeScript and distributed systems."
+author:
+  name: "Jakub Milkiewicz"
+url: "https://jmilkiewicz.github.io"
+baseurl: ""
+lang: en
+
+markdown: kramdown
+highlighter: rouge
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  hard_wrap: false
+
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+feed:
+  path: feed.xml
+
+sass:
+  style: compressed
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+
+permalink: /:year/:month/:title/
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - .serena
+  - .claude

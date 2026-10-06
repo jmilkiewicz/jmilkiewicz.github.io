@@ -1,0 +1,11 @@
+---
+layout: default
+---
+<section class="intro">
+  <p>{{ site.description }}</p>
+</section>
+{%- if site.posts.size > 0 -%}
+  {% include post-list.html posts=site.posts %}
+{%- else -%}
+  <p>No posts yet.</p>
+{%- endif -%}

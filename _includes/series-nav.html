@@ -1,0 +1,12 @@
+{%- comment -%} Lists all parts of the current post's series. {%- endcomment -%}
+{%- assign parts = site.posts | where: "series", page.series | sort: "series_part" -%}
+{%- if parts.size > 1 -%}
+<aside class="series-nav">
+  <p class="series-title">Series: <a href="{{ '/series/' | relative_url }}#{{ page.series | slugify }}">{{ page.series }}</a></p>
+  <ol>
+    {%- for p in parts -%}
+    <li>{% if p.url == page.url %}<strong>{{ p.title }}</strong>{% else %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endif %}</li>
+    {%- endfor -%}
+  </ol>
+</aside>
+{%- endif -%}
