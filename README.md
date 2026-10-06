@@ -29,3 +29,17 @@ series_part: 1
 - Code: fenced blocks with a language, e.g. ```` ```ts ````
 - Tables: GitHub-flavoured Markdown tables
 - Tags are listed at `/tags/`, series at `/series/`; posts in a series show a table of contents
+
+## Social preview image (LinkedIn, X, …)
+
+Every page uses `assets/images/og-default.png` unless a post sets its own `image:`.
+To generate a card with the post's title (and series, if any):
+
+```sh
+node tools/og-image.ts _posts/YYYY-MM-DD-slug.md   # writes assets/images/og-slug.png
+node tools/og-image.ts --default                   # regenerates og-default.png from _config.yml
+```
+
+Then add the printed `image:` line to the post's front matter. Needs Node 23.6+ and
+`rsvg-convert` (`brew install librsvg`). After publishing, check the card in
+[LinkedIn Post Inspector](https://www.linkedin.com/post-inspector/).
