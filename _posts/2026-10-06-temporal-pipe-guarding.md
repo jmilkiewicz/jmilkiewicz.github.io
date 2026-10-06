@@ -82,6 +82,8 @@ const worker = await Worker.create({
 
 were we able to see the actual exception: `TypeError: Cannot read properties of undefined (reading 'SWEET')`. That message, however, points at the place that detected the problem (the consumer), not the place that caused it (the producer).
 
+Why did that line execute at all? Because the workflow guarded with `if (flavors !== null)`. Since TypeScript promised `flavors` was either a record or `null`, nobody guarded against `undefined`. But in JavaScript, `undefined !== null` evaluates to `true`, so execution walked right into `flavors.SWEET`.
+
 To get to the truth, we had to open the Temporal UI and look at the activity's output. It turned out that **there was no `flavors` at all** in that output. Python had simply omitted the field.
 
 ## Act IV: the quick fix
