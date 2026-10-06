@@ -26,6 +26,11 @@ sass:
   style: compressed
 
 defaults:
+  # Social preview (og:image) for every page; a post can override it with its own image:.
+  - scope:
+      path: ""
+    values:
+      image: /assets/images/og-default.png
   - scope:
       path: ""
       type: posts
@@ -35,6 +40,7 @@ defaults:
 permalink: /:year/:month/:title/
 
 exclude:
+  - tools
   - README.md
   - Gemfile
   - Gemfile.lock

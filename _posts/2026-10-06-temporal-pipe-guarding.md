@@ -4,6 +4,7 @@ description: "How rewriting a Temporal activity from TypeScript to Python silent
 tags: [temporal, typescript, python, zod, contract-first]
 series: "Temporal in production"
 series_part: 1
+image: /assets/images/og-temporal-pipe-guarding.png
 ---
 
 I spent nine months working with [Temporal](https://temporal.io/) almost every day: designing workflows, debugging them in production and digging into how they work under the hood. That left me with plenty of stories worth writing down. This is the first post in a planned series (4-5 posts). I'm starting with a relatively simple topic, because it shows well how easily "working" code turns out to be fragile once two different languages sit on either end of the pipe.
