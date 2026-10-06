@@ -151,7 +151,7 @@ The worst part is that the naive version has three variants in which nothing vis
 | `{ flavors: { sweet: true, ... } }` (lowercase keys) | **Silence.** The payload says "sweet", the system detects nothing |
 | `{ flavors: { ..., UMAMI: true } }` (unknown key) | **Silence.** `isSweet: true`, the extra key goes unnoticed |
 
-The missing `isSweet` happens because `undefined` is dropped during JSON serialization, so the client receives `{ caption: "a cookie" }` even though the type promises `isSweet: boolean`.
+The missing `isSweet` happens because `undefined` is dropped during JSON serialization, so the client receives `{ caption: "dried fish" }` even though the type promises `isSweet: boolean`.
 
 ## Act V: the question that should have come earlier
 
@@ -242,6 +242,22 @@ Two decisions:
 - **We report only the name of the top-level field.** No values and no Zod messages, which may quote the received data. `ApplicationFailure` details end up in the workflow history and are visible in the UI, so real data shouldn't leak there. And the answer to "which property failed" is exactly what someone with an alert in hand needs.
 
 The `ActivityResultSchema<T>` interface describes only `safeParse`, the part common to Zod 3 and 4. That's how one function handles both schemas.
+
+### A note on Zod and workflow determinism
+
+Any code executed inside a Temporal workflow is subject to the golden rule of Temporal: **determinism during replay**.
+
+Running Zod inside workflow logic is entirely safe because validating structural types (objects, arrays, strings, enums) is a pure computation. However, you need to be cautious with Zod features that can introduce non-determinism:
+- Defaults or transforms that evaluate time or randomness (e.g., `new Date()`, `Date.now()`, or `crypto.randomUUID()`).
+- Refinements (`.refine()`) or transforms (`.transform()`) that access external state, globals, or environments.
+
+As long as schemas are pure validators over the raw payload, workflow replays will produce identical results every time.
+
+### Why validate at the call site instead of an interceptor?
+
+A fair question for experienced Temporal users: why call `parseActivityResult` manually instead of moving validation into a workflow interceptor or a custom data converter?
+
+You certainly can automate this via interceptors once schemas are mapped to activity types across the board. Doing it explicitly at the call site, however, kept the boundary front and center while we were redesigning the contract, made testing isolated workflows trivial, and served as a visible reminder that activity returns are untrusted wire data.
 
 ## Takeaways
 
