@@ -12,12 +12,12 @@ bundle exec jekyll serve --livereload
 
 ## Writing a post
 
-Posts go in `_posts/` as `YYYY-MM-DD-slug.md`. URLs look like `/YYYY/MM/slug/`.
+Posts go in `_posts/` as `YYYY-MM-DD-slug.md` (the date comes from the file name). URLs look like `/YYYY/MM/slug/`.
+A post dated in the future (Europe/Warsaw time) is skipped until the site is rebuilt on or after that date.
 
 ```yaml
 ---
 title: "Durable timers in Temporal"
-date: 2026-10-06
 tags: [temporal, typescript]
 description: "One-sentence summary used for SEO and the feed."
 # Optional: series

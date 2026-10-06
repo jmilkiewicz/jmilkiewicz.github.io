@@ -5,6 +5,7 @@ author:
 url: "https://jmilkiewicz.github.io"
 baseurl: ""
 lang: en
+timezone: Europe/Warsaw
 
 markdown: kramdown
 highlighter: rouge
@@ -16,6 +17,7 @@ kramdown:
 plugins:
   - jekyll-feed
   - jekyll-seo-tag
+  - jekyll-sitemap
 
 feed:
   path: feed.xml

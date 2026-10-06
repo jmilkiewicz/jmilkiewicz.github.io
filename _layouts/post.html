@@ -1,24 +1,32 @@
 ---
 layout: default
 ---
+{%- comment -%} Series parts are looked up once and shared by the TOC and the pager. {%- endcomment -%}
+{%- assign series_parts = "" | split: "" -%}
+{%- if page.series -%}
+  {%- assign series_parts = site.posts | where: "series", page.series | sort: "series_part" -%}
+  {%- for p in series_parts -%}
+    {%- if p.url == page.url -%}{%- assign series_index = forloop.index0 -%}{%- endif -%}
+  {%- endfor -%}
+{%- endif -%}
 <article class="post">
   <header class="post-header">
     <h1>{{ page.title | escape }}</h1>
     <p class="post-meta">
       <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%Y-%m-%d" }}</time>
       {%- if page.tags.size > 0 %} ·
-        {% for tag in page.tags %}<a class="tag" href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}">#{{ tag }}</a> {% endfor %}
+        {% for tag in page.tags %}<a class="tag" href="{{ '/tags/' | relative_url }}#{{ tag | slugify }}">#{{ tag }}</a>{% unless forloop.last %}{{ " " }}{% endunless %}{% endfor %}
       {%- endif %}
     </p>
   </header>
 
-  {%- if page.series %}{% include series-nav.html %}{% endif %}
+  {%- if series_parts.size > 1 %}{% include series-toc.html parts=series_parts index=series_index %}{% endif %}
 
   <div class="post-content">
     {{ content }}
   </div>
 
-  {%- if page.series %}{% include series-nav.html %}{% endif %}
+  {%- if series_parts.size > 1 %}{% include series-pager.html parts=series_parts index=series_index %}{% endif %}
 
   <nav class="post-nav">
     <a href="{{ '/' | relative_url }}">← All posts</a>

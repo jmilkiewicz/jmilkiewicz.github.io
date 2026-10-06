@@ -1,0 +1,12 @@
+{%- comment -%} Table of contents for a series. Params: parts, index (0-based position of this post). {%- endcomment -%}
+<aside class="series-nav">
+  <p class="series-title">
+    Part {{ include.index | plus: 1 }} of {{ include.parts.size }} in
+    <a href="{{ '/series/' | relative_url }}#{{ page.series | slugify }}">{{ page.series }}</a>
+  </p>
+  <ol>
+    {%- for p in include.parts -%}
+    <li>{% if forloop.index0 == include.index %}<strong>{{ p.title }}</strong>{% else %}<a href="{{ p.url | relative_url }}">{{ p.title }}</a>{% endif %}</li>
+    {%- endfor -%}
+  </ol>
+</aside>

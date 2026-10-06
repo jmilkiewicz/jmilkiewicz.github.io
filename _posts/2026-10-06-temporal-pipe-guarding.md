@@ -1,6 +1,5 @@
 ---
 title: "The compiler stopped guarding the pipe: how rewriting an activity in Python broke our Temporal contract"
-date: 2026-10-06
 description: "How rewriting a Temporal activity from TypeScript to Python silently broke the contract, why Zod 3 and Zod 4 validate the same schema differently, and how changing the data shape fixed it."
 tags: [temporal, typescript, python, zod, contract-first]
 series: "Temporal in production"
@@ -104,7 +103,7 @@ missingSweet: async () =>
   ({
     flavors: { SPICY: false, SALTY: true },
     caption: "dried fish",
-  }) as unknown as SnackCheckResult,
+  }) as unknown as SnackCheckResult
 ```
 
 Here are two tests that differ only in which Zod import path they use:

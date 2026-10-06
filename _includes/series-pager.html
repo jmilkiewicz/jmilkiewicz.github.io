@@ -1,0 +1,13 @@
+{%- comment -%} Previous/next links within a series. Params: parts, index (0-based position of this post). {%- endcomment -%}
+{%- assign prev_index = include.index | minus: 1 -%}
+{%- assign next_index = include.index | plus: 1 -%}
+<nav class="series-pager" aria-label="Series navigation">
+  {%- if include.index > 0 -%}
+    {%- assign prev = include.parts[prev_index] -%}
+    <a class="prev" href="{{ prev.url | relative_url }}"><small>← Previous part</small>{{ prev.title }}</a>
+  {%- endif -%}
+  {%- if next_index < include.parts.size -%}
+    {%- assign next = include.parts[next_index] -%}
+    <a class="next" href="{{ next.url | relative_url }}"><small>Next part →</small>{{ next.title }}</a>
+  {%- endif -%}
+</nav>
