@@ -149,7 +149,7 @@ The worst part is that the naive version has three variants in which nothing vis
 
 | What "Python" sends | Naive workflow |
 |---|---|
-| `{ caption: "a cookie" }` (no `flavors`) | `TypeError`, workflow hangs |
+| `{ caption: "no idea" }` (no `flavors`) | `TypeError`, workflow hangs |
 | `{ flavors: { SPICY: false, SALTY: true }, ... }` (incomplete record, no `SWEET`) | **Silence.** Result without `isSweet` |
 | `{ flavors: { sweet: true, ... } }` (lowercase keys) | **Silence.** The payload says "sweet", the system detects nothing |
 | `{ flavors: { ..., UMAMI: true } }` (unknown key) | **Silence.** `isSweet: true`, the extra key goes unnoticed |
