@@ -45,7 +45,7 @@ The team moved translation to a self-hosted model, served by a new Python worker
 
 ## Act II: one pod, one lane
 
-The Python activity did more than the TypeScript one. It detected the source language with fastText, translated locally with a Marian model if the language pair was supported, and otherwise fell back to an LLM over HTTPS. While it worked, a keepalive sent a heartbeat every 3 seconds. Simplified:
+The Python activity did more than the TypeScript one. It detected the source language with a local model, translated locally with a small translation model if the language pair was supported, and otherwise fell back to an LLM over HTTPS. While it worked, a keepalive sent a heartbeat every 3 seconds. Simplified:
 
 ```python
 @activity.defn
@@ -109,14 +109,11 @@ When a queue backs up, the natural reaction is to add workers. The deployment al
 
 ```yaml
 # illustrative values
-minReplicaCount: 5
 maxReplicaCount: 50
-pollingInterval: 3
 advanced:
   horizontalPodAutoscalerConfig:
     behavior:
       scaleUp:
-        stabilizationWindowSeconds: 0
         policies:
           - type: Percent
             value: 100
@@ -149,7 +146,7 @@ The first change was the obvious one: turn `async def` into `def`, so each activ
 Threads come with their own limitation. The model and tokenizer aren't safe to use from several threads at once, so local inference sits behind a lock. The lock covers only tokenization, `model.generate()` and model loading. Language detection and the LLM fallback run outside it.
 
 ```python
-class MarianTranslator:
+class LocalTranslator:
     def __init__(self) -> None:
         self._lock = threading.RLock()
 
