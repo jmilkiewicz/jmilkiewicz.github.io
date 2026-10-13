@@ -11,9 +11,8 @@ and scale-ups.
 
 Some of the things I've built along the way:
 
-- **Workflow orchestration with Temporal**: as Tech Lead at Orcrist, a platform
-  that processes customer audio, video, images and chat exports through
-  configurable, LLM-powered pipelines (TypeScript workflows, Python activities).
+- **Workflow orchestration with Temporal**: as Tech Lead at Orcrist, a production platform
+  running multi-step, LLM-powered processing pipelines (TypeScript workflows, Python activities).
 - **Real-time bidding**: a DSP serving thousands of bids per second at Webtrekk,
   and later the discovery and architecture of a new RTB platform
   for a major Polish e-commerce company.
@@ -39,3 +38,4 @@ in durable execution, distributed workflows and LLM-based systems.
 - LinkedIn: [Jakub Milkiewicz](https://linkedin.com/in/jakub-milkiewicz-9a14612)
 - GitHub: [jmilkiewicz](https://github.com/jmilkiewicz)
 - RSS: [feed.xml]({{ '/feed.xml' | relative_url }})
+- Series: [Temporal in production]({{ '/series/' | relative_url }}#temporal-in-production)

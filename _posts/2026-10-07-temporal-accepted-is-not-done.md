@@ -1,5 +1,5 @@
 ---
-title: "Accepted is not done: how a fan-out of 200,000 workflows made our Temporal cluster look frozen"
+title: "Accepted is not done: how a fan-out of 100,000+ workflows made our Temporal cluster look frozen"
 description: "How starting one Temporal workflow per item made our cluster look frozen, why batching starts is not backpressure, and how a sliding window on handle.result() fixed it."
 tags: [temporal, typescript, postgresql, backpressure, scalability]
 series: "Temporal in production"
@@ -11,7 +11,7 @@ This is the second post in my Temporal series. The first one was about a contrac
 
 The short version: **a started workflow is not a finished one.** Our importer waited for the first and ignored the second.
 
-As before, the domain is anonymized, and it's snacks again. Instead of the real data, we import a tasting archive: a large export from a snack-tasting app, where each tasting note can carry attachments such as photos and scanned wrappers. The code is simplified, but the shape of the problem and the numbers are real. The names are not.
+As before, the domain is anonymized, and it's snacks again. Instead of the real data, we import a tasting archive: a large export from a snack-tasting app, where each tasting note can carry attachments such as photos and scanned wrappers. The code is simplified and the numbers are illustrative.
 
 ## Act I: one workflow per tasting note
 
@@ -19,7 +19,7 @@ The design was simple, and for small archives it worked. An import activity read
 
 Each workflow type has its own task queue and its own workers. Some activities are shared, though. `tagFlavors`, for example, is called both from note workflows and from photo workflows, and all of its executions run on one dedicated activity task queue.
 
-Everybody knew that one workflow per note was not the most efficient design. It was the easiest one, and while the archives were small, nobody felt the cost.
+It was the simplest design, and at small scale the cost was invisible.
 
 The importer looked roughly like this (simplified):
 
@@ -56,14 +56,14 @@ So the batching doesn't throttle the system. Send 200 starts, wait for 200 ackno
 
 ## Act II: the freeze
 
-Then the archives got big. The largest one I processed had around 200,000 tasting notes, many of them with attachments. I have seen an export with over 400,000, but I never ran anything that large through this pipeline.
+Then the archives got big. The largest ones had well over a hundred thousand tasting notes, many of them with attachments. Exports could be larger still, but I never ran anything that large through this pipeline.
 
 What we saw:
 
 - Temporal UI showed an enormous number of running workflows, and almost none of them made progress.
 - Some workflows waited hours for their **first workflow task**. Not an activity: the very first step of the workflow code.
-- The PostgreSQL database behind Temporal (where workflow histories live), with 5 CPUs in Kubernetes, sat at its CPU limit.
-- Processing a single archive took up to about 15 hours.
+- The PostgreSQL database behind Temporal (where workflow histories live), a modest instance, sat at its CPU limit.
+- Processing a single archive took about 16 hours.
 
 Watching it live was strange. A batch of 200 workflows appeared in Temporal UI, and some of them started making progress. A fraction of a second later came the next 200, and a smaller share of those got going. Then the next 200, with an even smaller share. And so on. Things began to unclog, slowly, only once the importer stopped scheduling new workflows.
 
@@ -83,7 +83,7 @@ Here is my best explanation of what happened. It fits everything we observed, bu
 
 **Every start costs the database work.** Accepting a start means persisting the execution, its first history events and a task that hands the first workflow task over to matching. Our importer produced these writes as fast as the server would accept them, so the database was busy mostly with new starts.
 
-**Workflow tasks pile up.** Kubernetes scaled the note workers out to eight instances, and they still couldn't keep up, so a backlog built up. The first workflow tasks of hundreds of thousands of new workflows filled the queue, adding latency for every workflow that had already been started. For comparison, the bounded version described below ran comfortably on two workers.
+**Workflow tasks pile up.** Kubernetes scaled the note workers out to a handful of instances, and they still couldn't keep up, so a backlog built up. The first workflow tasks of hundreds of thousands of new workflows filled the queue, adding latency for every workflow that had already been started. For comparison, the bounded version described below ran comfortably on a couple of workers.
 
 **The real work has to queue too.** When an early note workflow finally ran, it called `tagFlavors` and started child workflows for its attachments. Separate task queues per workflow type helped a little: a photo workflow didn't wait behind the first tasks of note workflows. The shared activity queue didn't help at all. A `tagFlavors` call from a photo workflow had to compete with the `tagFlavors` calls of nearly every note in the archive.
 
@@ -144,7 +144,7 @@ There is also a timer that heartbeats every 5 minutes, because with a full windo
 
 Notes that fail are logged and counted, but they don't fail the import. Each note has its own workflow history and can be retried on its own.
 
-The result: the freeze disappeared immediately, and a similar archive was processed in about 7 hours instead of about 15.
+The result: the freeze disappeared immediately, and a similar archive was processed in about 8 hours instead of about 16.
 
 And that was with `synchronous_commit` back on. For the bounded version we restored the default, so the database was back to full durability, and the improvement came from the code change alone.
 
@@ -162,7 +162,7 @@ throughput = items in flight / average time in flight
 
 We doubled it to 100.
 
-Read backwards, the numbers hang together. 200,000 notes in about 7 hours is roughly 8 notes per second. With 100 in flight, that means about 12 seconds per note on average, attachments included. As a rough upper-bound estimate, assuming the same average time in flight, a window of 50 would have taken around 14 hours, about as long as the unbounded version. In practice it would probably have been somewhat less, because a smaller window also means less load and shorter waits.
+Read backwards, the numbers hang together. Take an archive of 100,000 notes processed in about 8 hours: that is roughly 3.5 notes per second. With 100 in flight, that means about 30 seconds per note on average, attachments included. As a rough upper-bound estimate, assuming the same average time in flight, a window of 50 would have taken around 16 hours, about as long as the unbounded version. In practice it would probably have been somewhat less, because a smaller window also means less load and shorter waits.
 
 I also ran short experiments with windows of 120, 150 and 200, and none of them looked bad. 150 looked especially good when the workflows were very short, because many notes took the early exit described above. Short workflows put little load on the rest of the system, so more of them can be in flight before anything downstream saturates. Overall, 100 and 150 gave very similar results. The best value depends on the data anyway, so we stayed with the more conservative 100.
 
@@ -238,6 +238,6 @@ We kept the activity because it was the smallest change to code that already wor
 
 With the window in place, imports stopped looking frozen and finished in about half the time.
 
-Some things we didn't change. The importer still reads the whole archive into memory. Each note workflow still receives the full note as its argument, so the data ends up in its history; passing an ID and loading the note in an activity would be lighter. And one workflow per note stayed. Moving away from it would have been a business decision, and not one I was in a position to make.
+Some things we didn't change. The importer still reads the whole archive into memory. Each note workflow still receives the full note as its argument, so the data ends up in its history; passing an ID and loading the note in an activity would be lighter. And one workflow per note stayed. Changing it was out of scope for this fix.
 
 The practical lesson: when you hand work to Temporal, decide up front how much of it may be in flight at once.

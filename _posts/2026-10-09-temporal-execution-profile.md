@@ -1,6 +1,6 @@
 ---
 title: "Same signature, different beast: what happened when our Temporal activity stopped being pure I/O"
-description: "How swapping an LLM translation call for a local model turned each Temporal worker into a one-lane road, why it showed up as heartbeat timeouts, and why 60 replicas made it worse."
+description: "How swapping an LLM translation call for a local model turned each Temporal worker into a one-lane road, why it showed up as heartbeat timeouts, and why dozens of replicas made it worse."
 tags: [temporal, python, asyncio, kubernetes, keda, performance]
 series: "Temporal in production"
 series_part: 3
@@ -11,11 +11,11 @@ This is the third post in my Temporal series. The first was about a data contrac
 
 The short version: **one pod, one event loop, one translation at a time.** We replaced a network call with a blocking, CPU-bound model call inside an `async def` activity. From then on, each Python worker could run only one translation at a time, no matter how many it had accepted, and the translations waiting their turn couldn't even tell Temporal they were alive.
 
-As before, the domain is anonymized, and it's snacks again. Our app collects tasting notes from all over the world, and to show them in one feed, we translate them. The code is simplified. The settings and timeouts are the real ones.
+As before, the domain is anonymized, and it's snacks again. Our pipeline translates user-written text so it can be shown in one language. The code and settings are simplified.
 
 ## Act I: two branches that look the same
 
-Translation could go one of two ways, depending on how a client was configured:
+Translation could go one of two ways, depending on configuration:
 
 ```ts
 if (translationParameters.kind === "languageModel") {
@@ -41,7 +41,7 @@ Read it as the workflow sees it: same inputs, same output, two interchangeable i
 
 The TypeScript branch was boring in the best way. The activity sent a request to an LLM and awaited the response. While it waited, the Node.js event loop was free to run other activities. In Grafana, activity execution time was low and so was schedule-to-start latency. The worker spent most of its life waiting on sockets.
 
-At our scale, though, paying per token added up. So the company decided to translate with its own model, served by a new Python worker (one per Kubernetes pod) on a new task queue. Clients were moved to it gradually, which is why, for a while, only some of them were affected.
+The team moved translation to a self-hosted model, served by a new Python worker (one per Kubernetes pod) on a new task queue. Configurations were moved gradually, which is why, for a while, only some of them were affected.
 
 ## Act II: one pod, one lane
 
@@ -103,13 +103,14 @@ Meanwhile, Temporal retried the timed-out attempts. All of the activity's own er
 
 With the TypeScript activity, none of this showed. An LLM call yields at its `await`, so many requests can wait in parallel on one event loop, and a short heartbeat timeout is harmless. The Python activity kept the same workflow call but stopped yielding, and that removed the conditions that had made the timeout harmless.
 
-## Act IV: why 60 replicas made it worse
+## Act IV: why dozens of replicas made it worse
 
 When a queue backs up, the natural reaction is to add workers. The deployment already scaled with KEDA on the task-queue backlog:
 
 ```yaml
+# illustrative values
 minReplicaCount: 5
-maxReplicaCount: 60
+maxReplicaCount: 50
 pollingInterval: 3
 advanced:
   horizontalPodAutoscalerConfig:
@@ -139,7 +140,7 @@ Every new pod did add a lane. But it also brought the same problem with it:
 3. Each timeout puts a retry back on the queue, alongside the new work.
 4. The backlog grows, KEDA adds pods, and we go back to step 1.
 
-Every pod also loaded its own copy of the models, so 60 replicas meant 60 copies in memory. The cluster paid for all that capacity and the queue barely moved, because much of it went into work that had already timed out. The number of pods wasn't the problem. Each pod accepting far more work than it could start was.
+Every pod also loaded its own copy of the models, so dozens of replicas meant dozens of copies in memory. The cluster paid for all that capacity and the queue barely moved, because much of it went into work that had already timed out. The number of pods wasn't the problem. Each pod accepting far more work than it could start was.
 
 ## Act V: threads, and what they didn't change
 

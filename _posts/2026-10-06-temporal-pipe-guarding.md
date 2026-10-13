@@ -7,7 +7,7 @@ series_part: 1
 image: /assets/images/og-temporal-pipe-guarding.png
 ---
 
-I spent nine months working with [Temporal](https://temporal.io/) almost every day: designing workflows, debugging them in production and digging into how they work under the hood. That left me with plenty of stories worth writing down. This is the first post in a planned series (4-5 posts). I'm starting with a relatively simple topic, because it shows well how easily "working" code turns out to be fragile once two different languages sit on either end of the pipe.
+I spent nine months working with [Temporal](https://temporal.io/) almost every day: designing workflows, debugging them in production and digging into how they work under the hood. That left me with plenty of stories worth writing down. This is the first post in a four-part series. I'm starting with a relatively simple topic, because it shows well how easily "working" code turns out to be fragile once two different languages sit on either end of the pipe.
 
 The examples are simplified and anonymized (snacks instead of the real domain). You can run all of the code yourself, no Docker needed: [temporal-polyglot-playground](https://github.com/jmilkiewicz/temporal-polyglot-playground).
 
